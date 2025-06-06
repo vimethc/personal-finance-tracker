@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyBDSvDH5_TG7mgIsCzKVbh5Kb5F-Yjqva4</string>
+	<key>GCM_SENDER_ID</key>
+	<string>325041490280</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.personalFinanceTracker</string>
+	<key>PROJECT_ID</key>
+	<string>personal-finance-tracker-ca51e</string>
+	<key>STORAGE_BUCKET</key>
+	<string>personal-finance-tracker-ca51e.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true/>
+	<key>IS_GCM_ENABLED</key>
+	<true/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true/>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:325041490280:ios:a7712288f7b60289adaedd</string>
+</dict>
+</plist>
