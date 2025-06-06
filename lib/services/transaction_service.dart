@@ -44,4 +44,39 @@ class TransactionService {
       'description': description,
     });
   }
+
+  Future<void> updateTransaction({
+    required String id,
+    required double amount,
+    required String category,
+    required DateTime date,
+    required String type,
+    required String description,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('User not logged in');
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('transactions')
+        .doc(id)
+        .update({
+      'amount': amount,
+      'category': category,
+      'date': Timestamp.fromDate(date),
+      'type': type,
+      'description': description,
+    });
+  }
+
+  Future<void> deleteTransaction(String id) async {
+    final user = _auth.currentUser;
+    if (user == null) throw Exception('User not logged in');
+    await _firestore
+        .collection('users')
+        .doc(user.uid)
+        .collection('transactions')
+        .doc(id)
+        .delete();
+  }
 } 

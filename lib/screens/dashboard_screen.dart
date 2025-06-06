@@ -4,6 +4,7 @@ import '../providers/transaction_providers.dart';
 import '../models/transaction_model.dart';
 import 'add_transaction_screen.dart';
 import 'transaction_history_screen.dart';
+import 'budget_planning_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -27,6 +28,15 @@ class DashboardScreen extends ConsumerWidget {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const TransactionHistoryScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.savings_rounded, color: accentColor),
+            tooltip: 'Budget Planning',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const BudgetPlanningScreen()),
               );
             },
           ),
