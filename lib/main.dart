@@ -5,6 +5,7 @@ import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/transaction_history_screen.dart';
 import 'providers/auth_providers.dart';
+import 'screens/home_shell_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +32,7 @@ class MyApp extends ConsumerWidget {
           if (user == null) {
             return const AuthScreen();
           } else {
-            return const DashboardScreen();
+            return const HomeShellScreen();
           }
         },
         loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),

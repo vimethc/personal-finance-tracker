@@ -13,25 +13,63 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _phoneNumberController = TextEditingController();
+  String _selectedGender = 'Prefer not to say';
   bool _isLogin = true;
   bool _isLoading = false;
   String? _error;
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _usernameController.dispose();
+    _phoneNumberController.dispose();
+    super.dispose();
+  }
+
   Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
+
     final authService = ref.read(authServiceProvider);
+
     try {
       if (_isLogin) {
-        await authService.signIn(_emailController.text.trim(), _passwordController.text.trim());
+        await authService.signInWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
       } else {
-        await authService.signUp(_emailController.text.trim(), _passwordController.text.trim());
+        await authService.signUpWithEmailAndPassword(
+          email: _emailController.text.trim(),
+          password: _passwordController.text.trim(),
+          username: _usernameController.text.trim(),
+          phoneNumber: _phoneNumberController.text.trim(),
+          gender: _selectedGender,
+        );
       }
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        if (e is! Exception) {
+          _error = 'An unexpected error occurred.';
+        } else if (e.toString().contains('firebase_auth')) {
+          _error = e.toString().split('] ').last.replaceAll('[', '').replaceAll(']', '');
+          if (_error!.contains('password')) {
+            _error = 'Weak password.';
+          } else if (_error!.contains('email-already-in-use')) {
+            _error = 'The email address is already in use by another account.';
+          }
+        } else {
+          _error = e.toString();
+        }
       });
     } finally {
       setState(() {
@@ -81,6 +119,18 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
+                      if (!_isLogin) ...[
+                        TextFormField(
+                          controller: _usernameController,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.person_rounded, color: accentColor),
+                            labelText: 'Username',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          validator: (value) => value != null && value.isNotEmpty ? null : 'Please enter a username',
+                        ),
+                        const SizedBox(height: 18),
+                      ],
                       TextFormField(
                         controller: _emailController,
                         decoration: InputDecoration(
@@ -102,6 +152,50 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                         obscureText: true,
                         validator: (value) => value != null && value.length >= 6 ? null : 'Password must be at least 6 characters',
                       ),
+                      if (!_isLogin) ...[
+                        const SizedBox(height: 18),
+                        TextFormField(
+                          controller: _phoneNumberController,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.phone_rounded, color: accentColor),
+                            labelText: 'Phone Number',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          keyboardType: TextInputType.phone,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter your phone number';
+                            }
+                            if (!RegExp(r'^[0-9]+$').hasMatch(value)) {
+                              return 'Please enter a valid phone number';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 18),
+                        DropdownButtonFormField<String>(
+                          value: _selectedGender,
+                          decoration: InputDecoration(
+                            prefixIcon: Icon(Icons.person_outline, color: accentColor),
+                            labelText: 'Gender',
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                          ),
+                          items: <String>['Male', 'Female', 'Prefer not to say'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                          onChanged: (newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedGender = newValue;
+                              });
+                            }
+                          },
+                          validator: (value) => value != null && value.isNotEmpty ? null : 'Please select your gender',
+                        ),
+                      ],
                       const SizedBox(height: 20),
                       if (_error != null)
                         Padding(
@@ -127,7 +221,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                                 },
                                 child: Text(
                                   _isLogin ? 'Login' : 'Register',
-                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
                                 ),
                               ),
                             ),
@@ -137,6 +231,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
                           setState(() {
                             _isLogin = !_isLogin;
                             _error = null;
+                            _emailController.clear();
+                            _passwordController.clear();
+                            _usernameController.clear();
+                            _phoneNumberController.clear();
+                            _selectedGender = 'Prefer not to say';
                           });
                         },
                         child: Text(

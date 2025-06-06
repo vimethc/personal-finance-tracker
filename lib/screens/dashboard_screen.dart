@@ -6,12 +6,41 @@ import 'add_transaction_screen.dart';
 import 'transaction_history_screen.dart';
 import 'budget_planning_screen.dart';
 import 'reports_screen.dart';
+import 'bills_screen.dart';
+import 'user_profile_screen.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  _DashboardScreenState createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(_animationController);
+
+    // Start the animation when the widget is built
+    _animationController.forward();
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final themeColor = const Color(0xFF512DA8);
     final accentColor = const Color(0xFF9575CD);
     final transactionsAsync = ref.watch(transactionsProvider);
@@ -24,29 +53,11 @@ class DashboardScreen extends ConsumerWidget {
         elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(Icons.list_alt_rounded, color: accentColor),
-            tooltip: 'Transaction History',
+            icon: Icon(Icons.account_circle_rounded, color: accentColor),
+            tooltip: 'User Profile',
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const TransactionHistoryScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.savings_rounded, color: accentColor),
-            tooltip: 'Budget Planning',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const BudgetPlanningScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: Icon(Icons.pie_chart_rounded, color: accentColor),
-            tooltip: 'Monthly Report',
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (context) => const ReportsScreen()),
+                MaterialPageRoute(builder: (context) => const UserProfileScreen()),
               );
             },
           ),
@@ -66,44 +77,87 @@ class DashboardScreen extends ConsumerWidget {
               }
             }
             final double remainingBudget = totalIncome - totalExpenses;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    _SummaryCard(
-                      label: 'Income',
-                      value: totalIncome,
-                      icon: Icons.arrow_downward_rounded,
-                      color: Colors.green[400]!,
-                    ),
-                    const SizedBox(width: 16),
-                    _SummaryCard(
-                      label: 'Expenses',
-                      value: totalExpenses,
-                      icon: Icons.arrow_upward_rounded,
-                      color: Colors.red[400]!,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                _SummaryCard(
-                  label: 'Remaining Budget',
-                  value: remainingBudget,
-                  icon: Icons.account_balance_wallet_rounded,
-                  color: accentColor,
-                  isLarge: true,
-                ),
-                const SizedBox(height: 32),
-                Center(
-                  child: Text(
-                    transactions.isEmpty
-                        ? 'No transactions yet. Add your first one!'
-                        : 'Welcome to your personal finance dashboard!',
-                    style: TextStyle(fontSize: 18, color: themeColor, fontWeight: FontWeight.w500),
+            return FadeTransition(
+              opacity: _fadeAnimation,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _SummaryCard(
+                          label: 'Income',
+                          value: totalIncome,
+                          icon: Icons.arrow_downward_rounded,
+                          color: Colors.green[400]!,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: _SummaryCard(
+                          label: 'Expenses',
+                          value: totalExpenses,
+                          icon: Icons.arrow_upward_rounded,
+                          color: Colors.red[400]!,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  _SummaryCard(
+                    label: 'Remaining Budget',
+                    value: remainingBudget,
+                    icon: Icons.account_balance_wallet_rounded,
+                    color: accentColor,
+                    isLarge: true,
+                  ),
+                  const SizedBox(height: 32),
+                  Center(
+                    child: Text(
+                      transactions.isEmpty
+                          ? 'Add your first transaction to see summary!'
+                          : 'Welcome back!',
+                      style: TextStyle(fontSize: 18, color: themeColor, fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                  if (transactions.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    Text(
+                      'Recent Transactions',
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: themeColor),
+                    ),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: transactions.length > 5 ? 5 : transactions.length,
+                        itemBuilder: (context, index) {
+                          final transaction = transactions[index];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(vertical: 4.0),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            child: ListTile(
+                              leading: Icon(
+                                transaction.type == 'income' ? Icons.arrow_downward : Icons.arrow_upward,
+                                color: transaction.type == 'income' ? Colors.green[400] : Colors.red[400],
+                              ),
+                              title: Text(transaction.description),
+                              trailing: Text(
+                                '\$${transaction.amount.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: transaction.type == 'income' ? Colors.green[400] : Colors.red[400],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ]
+                ],
+              ),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),

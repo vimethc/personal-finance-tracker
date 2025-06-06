@@ -9,4 +9,13 @@ final authServiceProvider = Provider<AuthService>((ref) => AuthService());
 final authStateProvider = StreamProvider<User?>((ref) {
   final authService = ref.watch(authServiceProvider);
   return authService.authStateChanges;
+});
+
+// StreamProvider for user profile data
+final userProfileProvider = StreamProvider.family<Map<String, dynamic>?, String?>((ref, uid) {
+  if (uid == null) {
+    return Stream.value(null);
+  }
+  final authService = ref.watch(authServiceProvider);
+  return authService.getUserProfile(uid);
 }); 
