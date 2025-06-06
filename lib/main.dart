@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'screens/auth_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/transaction_history_screen.dart';
 import 'providers/auth_providers.dart';
 
 void main() async {
@@ -22,6 +23,9 @@ class MyApp extends ConsumerWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
+      routes: {
+        '/transactionHistory': (context) => const TransactionHistoryScreen(),
+      },
       home: authState.when(
         data: (user) {
           if (user == null) {

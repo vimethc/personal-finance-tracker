@@ -5,6 +5,7 @@ import '../models/transaction_model.dart';
 import 'add_transaction_screen.dart';
 import 'transaction_history_screen.dart';
 import 'budget_planning_screen.dart';
+import 'reports_screen.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -37,6 +38,15 @@ class DashboardScreen extends ConsumerWidget {
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const BudgetPlanningScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.pie_chart_rounded, color: accentColor),
+            tooltip: 'Monthly Report',
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ReportsScreen()),
               );
             },
           ),

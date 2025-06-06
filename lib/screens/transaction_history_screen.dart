@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/transaction_providers.dart';
 import '../models/transaction_model.dart';
 import 'edit_transaction_screen.dart';
+import 'package:intl/intl.dart';
 
 class TransactionHistoryScreen extends ConsumerStatefulWidget {
   const TransactionHistoryScreen({Key? key}) : super(key: key);
@@ -15,6 +16,36 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
   String _typeFilter = 'all';
   DateTime? _startDate;
   DateTime? _endDate;
+  String? _categoryFilter;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+      if (args != null) {
+        final month = args['month'] as String?;
+        final category = args['category'] as String?;
+
+        if (month != null) {
+          try {
+            final date = DateFormat('yyyy-MM').parse(month);
+            _startDate = DateTime(date.year, date.month, 1);
+            _endDate = DateTime(date.year, date.month + 1, 0, 23, 59, 59);
+          } catch (e) {
+            print('Error parsing month argument: $e');
+          }
+        }
+
+        if (category != null) {
+          _categoryFilter = category;
+          _typeFilter = 'expense';
+        }
+
+        setState(() {});
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +72,10 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
                     DropdownMenuItem(value: 'income', child: Text('Income')),
                     DropdownMenuItem(value: 'expense', child: Text('Expense')),
                   ],
-                  onChanged: (val) => setState(() => _typeFilter = val ?? 'all'),
+                  onChanged: (val) => setState(() {
+                    _typeFilter = val ?? 'all';
+                    _categoryFilter = null;
+                  }),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -59,6 +93,7 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
                         setState(() {
                           _startDate = picked.start;
                           _endDate = picked.end;
+                          _categoryFilter = null;
                         });
                       }
                     },
@@ -73,15 +108,20 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
                         children: [
                           Icon(Icons.date_range, color: accentColor, size: 20),
                           const SizedBox(width: 6),
-                          Text(_startDate == null || _endDate == null
-                              ? 'Date Range'
-                              : '${_startDate!.year}-${_startDate!.month.toString().padLeft(2, '0')}-${_startDate!.day.toString().padLeft(2, '0')} to ${_endDate!.year}-${_endDate!.month.toString().padLeft(2, '0')}-${_endDate!.day.toString().padLeft(2, '0')}'),
+                          Expanded(
+                            child: Text(_startDate == null || _endDate == null
+                                ? 'Date Range'
+                                : '${_startDate!.year}-${_startDate!.month.toString().padLeft(2, '0')}-${_startDate!.day.toString().padLeft(2, '0')} to ${_endDate!.year}-${_endDate!.month.toString().padLeft(2, '0')}-${_endDate!.day.toString().padLeft(2, '0')}',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
                           if (_startDate != null && _endDate != null)
                             IconButton(
                               icon: const Icon(Icons.clear, size: 18),
                               onPressed: () => setState(() {
                                 _startDate = null;
                                 _endDate = null;
+                                _categoryFilter = null;
                               }),
                             ),
                         ],
@@ -95,12 +135,12 @@ class _TransactionHistoryScreenState extends ConsumerState<TransactionHistoryScr
           Expanded(
             child: transactionsAsync.when(
               data: (transactions) {
-                // Apply filters
                 final filtered = transactions.where((t) {
                   final typeMatch = _typeFilter == 'all' || t.type == _typeFilter;
                   final dateMatch = (_startDate == null || !t.date.isBefore(_startDate!)) &&
                       (_endDate == null || !t.date.isAfter(_endDate!));
-                  return typeMatch && dateMatch;
+                  final categoryMatch = _categoryFilter == null || t.category == _categoryFilter;
+                  return typeMatch && dateMatch && categoryMatch;
                 }).toList();
                 if (filtered.isEmpty) {
                   return const Center(child: Text('No transactions found.'));
